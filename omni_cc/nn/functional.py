@@ -1,6 +1,6 @@
 from tvm import relax, te, tir
 from tvm.relax.testing import nn
-from tvm.relax.op import add, exp, flatten, log, multiply, reshape, squeeze
+from tvm.relax.op import add, exp, flatten, log, multiply, reshape
 from tvm.relax.op.nn import softmax
 
 __all__ = [
@@ -51,7 +51,6 @@ def interpolate(
 
     if size is None:
         assert scale_factor is not None
-
         shape = x.struct_info.shape
         assert isinstance(shape, relax.ShapeExpr)
         size = tuple(int(shape[i].value * scale_factor) for i in range(2, len(shape)))
@@ -71,6 +70,7 @@ def interpolate(
     return nn.emit(
         resize2d(
             x,
+            size=size,
             layout="NCHW",
             method=mode,
             coordinate_transformation_mode=coord_trans,

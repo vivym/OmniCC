@@ -1,7 +1,7 @@
 from tvm import relax
 from tvm.relax.op import astype, reshape, permute_dims
 
-from omni_cc import nn
+from omni_cc import nn, op
 from omni_cc.nn import functional as F
 from .resnet import ResnetBlock2D, Upsample2D
 
@@ -108,7 +108,7 @@ class AttentionBlock(nn.Module):
 
         self.channels = channels
         self.num_heads = channels // num_head_channels if num_head_channels is not None else 1
-        self.head_dim = num_head_channels
+        self.head_dim = channels // self.num_heads
 
         self.group_norm = nn.GroupNorm(num_channels=channels, num_groups=norm_num_groups, eps=eps)
 
@@ -124,17 +124,21 @@ class AttentionBlock(nn.Module):
         self._attention_op = None
 
     def reshape_heads_to_batch_dim(self, x: relax.Expr) -> relax.Var:
-        batch_size, seq_len, _ = x.struct_info.shape.values
-        x = nn.emit(reshape(x, shape=[batch_size, seq_len, self.num_heads, self.head_dim]))
+        batch_size, seq_len, hidden_dim = x.struct_info.shape.values
+        nhead = self.num_heads
+        head_dim = hidden_dim // nhead
+        x = nn.emit(reshape(x, shape=[batch_size, seq_len, nhead, head_dim]))
         x = nn.emit(permute_dims(x, [0, 2, 1, 3]))
-        x = nn.emit(reshape(x, shape=[batch_size * self.num_heads, seq_len, self.head_dim]))
+        x = nn.emit(reshape(x, shape=[batch_size * nhead, seq_len, head_dim]))
         return x
 
     def reshape_batch_dim_to_heads(self, x: relax.Expr) -> relax.Var:
-        batch_size, seq_len, _ = x.struct_info.shape.values
-        x = nn.emit(reshape(x, shape=[batch_size // self.num_heads, self.num_heads, seq_len, self.head_dim]))
+        batch_size, seq_len, hidden_dim = x.struct_info.shape.values
+        nhead = self.num_heads
+        head_dim = hidden_dim // nhead
+        x = nn.emit(reshape(x, shape=[batch_size // nhead, nhead, seq_len, head_dim]))
         x = nn.emit(permute_dims(x, [0, 2, 1, 3]))
-        x = nn.emit(reshape(x, shape=[batch_size // self.num_heads, seq_len, self.channels]))
+        x = nn.emit(reshape(x, shape=[batch_size // nhead, seq_len, nhead * head_dim]))
         return x
 
     def forward(self, hidden_states: relax.Expr) -> relax.Var:
@@ -164,11 +168,16 @@ class AttentionBlock(nn.Module):
         if self._use_memory_efficient_attention_xformers:
             assert NotImplementedError
         else:
-            attention_scores = nn.emit(query @ nn.emit(permute_dims(key, [0, 2, 1])) * scale)
+            attention_scores = nn.emit(
+                op.matmul(
+                    query,
+                    nn.emit(permute_dims(key, [0, 2, 1])) * scale,
+                ),
+            )
             attention_scores = astype(attention_scores, "float32")
             attention_probs = nn.emit(F.softmax(attention_scores, axis=-1))
             attention_probs = astype(attention_probs, dtype)
-            hidden_states = nn.emit(attention_probs @ value)
+            hidden_states = nn.emit(op.matmul(attention_probs, value))
 
         # reshape back
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)

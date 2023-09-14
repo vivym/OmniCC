@@ -8,7 +8,6 @@ from tvm.relax.testing.nn import (
     Sequential,
     ReLU,
     LogSoftmax,
-    Linear,
     emit,
     emit_te,
     emit_checkpoint,
@@ -19,6 +18,7 @@ from tvm.relax.testing.nn import (
 from .activations import GELU, QuickGELU, SiLU, Mish
 from .conv import Conv2d, ConvTranspose2d
 from .embedding import Embedding
+from .linear import Linear
 from .normalization import LayerNorm, GroupNorm, AdaGroupNorm
 from .pooling import AvgPool2d
 

@@ -1,6 +1,6 @@
 from tvm import relax
 from tvm.relax.testing import nn
-from tvm.relax.op import add
+from tvm.relax.op import add, reshape
 from tvm.relax.op.nn import conv2d, conv2d_transpose
 
 
@@ -21,6 +21,7 @@ class Conv2d(nn.Module):
 
         self.in_channels = in_channels
         self.out_channels = out_channels
+        kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -28,7 +29,7 @@ class Conv2d(nn.Module):
         self.groups = groups
 
         self.weight = nn.Parameter(
-            (out_channels, in_channels // groups, *kernel_size),
+            (out_channels, in_channels // groups) + kernel_size,
             dtype=dtype,
             name="weight",
         )
@@ -50,7 +51,8 @@ class Conv2d(nn.Module):
         )
 
         if self.bias is not None:
-            x = nn.emit(add(x, self.bias))
+            bias = nn.emit(reshape(self.bias, shape=(1, -1, 1, 1)))
+            x = nn.emit(add(x, bias))
 
         return x
 
@@ -73,6 +75,7 @@ class ConvTranspose2d(nn.Module):
 
         self.in_channels = in_channels
         self.out_channels = out_channels
+        kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
@@ -81,7 +84,7 @@ class ConvTranspose2d(nn.Module):
         self.dilation = dilation
 
         self.weight = nn.Parameter(
-            (in_channels, out_channels // groups, *kernel_size),
+            (in_channels, out_channels // groups) + kernel_size,
             dtype=dtype,
             name="weight",
         )
@@ -105,6 +108,7 @@ class ConvTranspose2d(nn.Module):
         )
 
         if self.bias is not None:
-            x = nn.emit(add(x, self.bias))
+            bias = nn.emit(reshape(self.bias, shape=(1, -1, 1, 1)))
+            x = nn.emit(add(x, bias))
 
         return x

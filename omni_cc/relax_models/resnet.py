@@ -1,4 +1,5 @@
 from tvm import relax
+
 from omni_cc import nn, op
 from omni_cc.nn import functional as F
 
@@ -138,7 +139,7 @@ class ResnetBlock2D(nn.Module):
         else:
             self.norm2 = nn.GroupNorm(num_groups=groups_out, num_channels=out_channels, eps=eps)
 
-        self.dropout = nn.Dropout(dropout)
+        # self.dropout = nn.Dropout(dropout)
         conv_2d_out_channels = conv_2d_out_channels or out_channels
         self.conv2 = nn.Conv2d(out_channels, conv_2d_out_channels, kernel_size=3, stride=1, padding=1)
 
@@ -223,7 +224,7 @@ class ResnetBlock2D(nn.Module):
 
         hidden_states = self.nonlinearity(hidden_states)
 
-        hidden_states = self.dropout(hidden_states)
+        # hidden_states = self.dropout(hidden_states)
         hidden_states = self.conv2(hidden_states)
 
         if self.conv_shortcut is not None:
