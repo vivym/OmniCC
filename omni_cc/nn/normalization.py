@@ -113,8 +113,24 @@ class AdaGroupNorm(nn.Module):
         emb = expand_dims(emb, axis=-1)
         emb = expand_dims(emb, axis=-1)
 
-        scale = strided_slice(emb, axes=[1], begin=[0], end=[1], strides=[], assume_inbound=True)
-        shift = strided_slice(emb, axes=[1], begin=[0], end=[1], strides=[], assume_inbound=True)
+        dim = x.struct_info.shape[1].value
+        half_size = dim // 2
+        scale = strided_slice(
+            emb,
+            axes=[1],
+            begin=[0],
+            end=[half_size],
+            strides=[1],
+            assume_inbound=True,
+        )
+        shift = strided_slice(
+            emb,
+            axes=[1],
+            begin=[half_size],
+            end=[dim],
+            strides=[1],
+            assume_inbound=True,
+        )
 
         x = group_norm(
             x,

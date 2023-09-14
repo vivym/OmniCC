@@ -2,7 +2,7 @@ from tvm import relax
 
 from omni_cc import nn
 
-from .unet_2d_blocks import UNetMidBlock2D
+from .unet_2d_blocks import UNetMidBlock2D, get_up_block
 
 
 class Decoder(nn.Module):
@@ -86,7 +86,7 @@ class Decoder(nn.Module):
         sample = self.conv_act(sample)
         sample = self.conv_out(sample)
 
-        return sample
+        return nn.emit(sample)
 
 
 class AutoencoderKL(nn.Module):
@@ -122,4 +122,4 @@ class AutoencoderKL(nn.Module):
 
     def decode(self, z: relax.Expr) -> relax.Var:
         z = self.post_quant_conv(z)
-        return self.decoder(z)
+        return nn.emit(self.decoder(z))
