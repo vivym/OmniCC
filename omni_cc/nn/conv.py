@@ -3,8 +3,10 @@ from tvm.relax.testing import nn
 from tvm.relax.op import add, reshape
 from tvm.relax.op.nn import conv2d, conv2d_transpose
 
+from .module import Module
 
-class Conv2d(nn.Module):
+
+class Conv2d(Module):
     def __init__(
         self,
         in_channels: int,
@@ -57,7 +59,7 @@ class Conv2d(nn.Module):
         return x
 
 
-class ConvTranspose2d(nn.Module):
+class ConvTranspose2d(Module):
     def __init__(
         self,
         in_channels: int,

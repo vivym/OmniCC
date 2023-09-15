@@ -2,8 +2,10 @@ from tvm import relax
 from tvm.relax.testing import nn
 from tvm.relay.op import reshape, take
 
+from .module import Module
 
-class Embedding(nn.Module):
+
+class Embedding(Module):
     def __init__(self, num_embeddings: int, embedding_dim: int, dtype: str = "float32"):
         super().__init__()
 

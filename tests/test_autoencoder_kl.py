@@ -1,5 +1,6 @@
 import unittest
 
+import tvm
 from tvm import relax
 
 from omni_cc import nn
@@ -41,7 +42,7 @@ class TestAutoencoderKL(unittest.TestCase):
                 force_upcast=True,
             )
 
-            latents = nn.Parameter((1, 4, 64, 64), dtype="float32", name="latents")
+            latents = nn.Parameter((1, 4, 8, 8), dtype="float32", name="latents")
 
             with bb.dataflow():
                 sample = vae.decode(latents)
@@ -54,7 +55,15 @@ class TestAutoencoderKL(unittest.TestCase):
         gv = mod.get_global_var("vae_decode")
         bb.update_func(gv, mod[gv].with_attr("num_input", 1))
 
+        mod = relax.transform.LegalizeOps()(mod)
         print(mod)
+
+        ex = relax.build(mod, target="llvm")
+        vm = relax.vm.VirtualMachine(ex, relax.vm.Device(1, 0))
+
+        import numpy as np
+        z = tvm.nd.array(np.zeros((1, 4, 8, 8), dtype="float32"))
+        sample = vm["vae_decode"](z)
 
 
 if __name__ == "__main__":

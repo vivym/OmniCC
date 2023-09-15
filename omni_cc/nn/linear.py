@@ -2,8 +2,10 @@ from tvm import relax
 from tvm.relax.testing import nn
 from tvm.relax.op import linear
 
+from .module import Module
 
-class Linear(nn.Module):
+
+class Linear(Module):
     def __init__(
         self,
         in_features: int,

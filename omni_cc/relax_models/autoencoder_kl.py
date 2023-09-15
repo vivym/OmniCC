@@ -36,7 +36,7 @@ class Decoder(nn.Module):
         )
 
         # up
-        self.up_blocks = []
+        self.up_blocks = nn.ModuleList()
         reversed_block_out_channels = list(reversed(block_out_channels))
         output_channel = reversed_block_out_channels[0]
         for i, up_block_type in enumerate(up_block_types):

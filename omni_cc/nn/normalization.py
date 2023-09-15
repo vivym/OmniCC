@@ -4,9 +4,10 @@ from tvm.relax.op import add, astype, multiply, expand_dims, strided_slice
 from tvm.relax.op.nn import layer_norm, group_norm
 
 from .activations import GELU, SiLU, Mish
+from .module import Module
 
 
-class LayerNorm(nn.Module):
+class LayerNorm(Module):
     def __init__(self, hidden_size: int, eps: float = 1e-5):
         super().__init__()
 
@@ -38,7 +39,7 @@ class LayerNorm(nn.Module):
         return x
 
 
-class GroupNorm(nn.Module):
+class GroupNorm(Module):
     def __init__(self, num_groups: int, num_channels: int, eps: float = 1e-5):
         super().__init__()
 
@@ -75,7 +76,7 @@ class GroupNorm(nn.Module):
         return x
 
 
-class AdaGroupNorm(nn.Module):
+class AdaGroupNorm(Module):
     """
     GroupNorm layer modified to incorporate timestep embeddings.
     """

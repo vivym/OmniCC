@@ -2,8 +2,10 @@ from tvm import relax
 from tvm.relax.testing import nn
 from tvm.relax.op.nn import avg_pool2d
 
+from .module import Module
 
-class AvgPool2d(nn.Module):
+
+class AvgPool2d(Module):
     def __init__(
         self,
         kernel_size: int | tuple[int, int],
