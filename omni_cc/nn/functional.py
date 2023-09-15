@@ -53,7 +53,14 @@ def interpolate(
         assert scale_factor is not None
         shape = x.struct_info.shape
         assert isinstance(shape, relax.ShapeExpr)
-        size = tuple(int(shape[i].value * scale_factor) for i in range(2, len(shape)))
+
+        def to_int(x):
+            if isinstance(x, (int, float)):
+                return int(x)
+            else:
+                return tir.Cast("int64", x)
+
+        size = tuple(to_int(s * scale_factor) for s in shape.values[2:])
 
     if mode.startswith("nearest"):
         mode = "nearest_neighbor"

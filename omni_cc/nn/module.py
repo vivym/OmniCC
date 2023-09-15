@@ -23,6 +23,17 @@ class Module(_Module):
 
         return params
 
+    def get_torch_to_tvm_name_mapping(self):
+        name_mapping = {}
+
+        for param in self.parameters():
+            name_mapping[param.name] = param
+
+        return name_mapping
+
+    def build(self, bb: relax.BlockBuilder, x: relax.Expr) -> relax.Var:
+        raise NotImplementedError()
+
 
 class ModuleList(Module):
     def __init__(self, modules: list[Module] | None = None):
